@@ -10,12 +10,14 @@ public class NpcControl : MonoBehaviour {
     public GameObject slashEffect;
     public GameObject bloodEffect;
     public Slider hpBar;
-    public SpriteRenderer idleSprite, attackSprite, damageSprite;
+    public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite;
     SpriteRenderer sRender;
 	
 	float healthPoint = 1f;
 
     public Element element;
+
+    public Data.TileTypes baseElement;
 
 
     public int health;
@@ -67,7 +69,7 @@ public class NpcControl : MonoBehaviour {
             instance.transform.localPosition = transform.localPosition + new Vector3(0f, 100f, 0f);
     }
 	
-	void SetHealthPoint(float point){
+	public void SetHealthPoint(float point){
 		if (point<0f) point = 1f;
 		if (point>1f) point = 1f;
 		TweenParms parms = new TweenParms().Prop("sliderValue", point).Ease(EaseType.EaseOutQuart);
@@ -79,28 +81,16 @@ public class NpcControl : MonoBehaviour {
 		SetHealthPoint(healthPoint - damage);
 	}
 
-	public void Damage(int damageToTake, Element damageElement){
+    public void SetHealthUp(float heal)
+    {
+        SetHealthPoint(healthPoint + heal);
+    }
+
+    public void Damage(float damage){
         if (animator) animator.CrossFade("Damage", 0.2f);
-
-
-        int totalDamage = damageToTake;
-        switch (damageElement)
-        {
-            case Element.WATER:
-                if (element == Element.FIRE)
-                    totalDamage = damageToTake * 2;
-                break;
-        }
-
-
-        health -= totalDamage;
-        
-
         StartCoroutine(DoDamage(0.1f));
-		StartCoroutine( DoneDamage(0.1f) );
-		SetHealthDamage(0.1f);
-
-        if (health <= 0) Die();
+        StartCoroutine(DoneDamage(0.1f));
+        SetHealthDamage(damage);
     }
 
     void Die()
@@ -115,6 +105,17 @@ public class NpcControl : MonoBehaviour {
         StartCoroutine(DoAttack(0.5f));
         StartCoroutine(DoneAttack(0.5f));
     }
+
+    public void SetElement(int randomElement)
+    {
+        baseElement = (Data.TileTypes)randomElement + 1;
+    }
+
+    public Data.TileTypes GetElement()
+    {
+        return baseElement;
+    }
+
 }
 
 

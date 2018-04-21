@@ -71,8 +71,14 @@ public class GameSystem : MonoBehaviour {
     public bool canDoInput;
 
     public int playerCount = 2;
-    public int curPlayerTurn = -1;
-	
+
+    //Who's turn is it
+    public bool playerHumanTurn = true;
+    public bool wasMatch3 = false;
+
+    public float healValue = 0.2f;
+    private int bonusTurns = 0;
+
 	// Setup Audio Source - fuck the bar that took me 5h.
 	void SetupAudioSource(){
 		audioMatchClip = new AudioClip[sounds.Length];
@@ -317,28 +323,18 @@ public class GameSystem : MonoBehaviour {
     }
     */
 
-	// Attack NPC Monster
-	IEnumerator AttackMonster(float delayTime) {
+    // Attack NPC Monster
+    IEnumerator AttackMonster(float delayTime) {
 		pcControl.Attack();
 		yield return new WaitForSeconds(delayTime);
-
-
-        // -------------------------------------------------------------------------------------  REMEMBER TO CHANGE THIS LATER KELLE (adam)
-        // !!!
-        // !!!
-
-
-
-        // DON'T FORGET THIS
-        npcControl.Damage(10, Element.FIRE);
-        // ^ CHANGE THAT ------------------------------------------------------------------------------------------------------------
+        npcControl.Damage(0.1f);
 	}
 
     IEnumerator AttackPlayer(float delayTime)
     {
         npcControl.Attack();
         yield return new WaitForSeconds(delayTime);
-        pcControl.Damage();
+        pcControl.Damage(0.1f);
     }
 
 
@@ -371,9 +367,12 @@ public class GameSystem : MonoBehaviour {
 
     IEnumerator CheckMatch3_Coroutine(Dictionary<TilePoint, Data.TileTypes> stack)
     {
+
+        Data.TileTypes tileType = Data.TileTypes.Empty;
         List<MatchItem> destroyList = new List<MatchItem>();
         foreach (KeyValuePair<TilePoint, Data.TileTypes> item in stack)
         {
+            tileType = item.Value;
             destroyList.Add(FindTile(item.Key));
         }
         Coroutine deleteAnimation = null;
@@ -391,10 +390,30 @@ public class GameSystem : MonoBehaviour {
             //  DoStarEffect(instance.transform.localPosition, type);
         }
         yield return deleteAnimation;
-        StartCoroutine(AttackMonster(0.7f));
-        StartCoroutine(FillEmpty(0.5f));
+
+        //Calculates the effect Values
+        if (playerHumanTurn)
+            CalculateElementEffect(tileType,npcControl.baseElement);
+        else
+            CalculateElementEffect(tileType,pcControl.baseElement);
+
+        CompleteAttack(playerHumanTurn);
     }
- 
+
+
+    void CompleteAttack(bool isPlayerHuman)
+    {
+        if (isPlayerHuman)
+        {
+            StartCoroutine(AttackMonster(0.7f));
+            StartCoroutine(FillEmpty(0.5f));
+        }
+        else
+        {
+            StartCoroutine(AttackPlayer(0.7f));
+            StartCoroutine(FillEmpty(0.5f));
+        }
+    }
 
     //Make animation fade out after matching tiles and before creating new tiles to drop down
     IEnumerator animateDelete(MatchItem item, int index)
@@ -463,7 +482,6 @@ public class GameSystem : MonoBehaviour {
 
         isDoing = true;
         DoSwapTile(item1, item2);
-        DoSwapMotion(item1.transform, item2.transform);
         yield return StartCoroutine(CheckMatch3Tile(0.5f, item1, item2));
 
         Debug.Log("AI turn end");
@@ -471,21 +489,31 @@ public class GameSystem : MonoBehaviour {
 
 	// Ready Game Turn
 	void ReadyGameTurn(){
-        curPlayerTurn = (curPlayerTurn + 1) % playerCount;
-        if (isLocalPlayerTurn())
+
+        if (bonusTurns == 0)
+        {
+            playerHumanTurn = !playerHumanTurn;
+        }
+        else
+        {
+            bonusTurns--;
+        }
+
+        if (isPlayerHumanTurn())
         {
             isDoing = false;
             canDoInput = true;
             DebugFindHint();
-        } else
+        }
+        else
         {
             DoAITurn();
         }
 	}
 
-    bool isLocalPlayerTurn()
+    bool isPlayerHumanTurn()
     {
-        return curPlayerTurn == 0;
+        return playerHumanTurn;
     }
 
     void DoAITurn()
@@ -580,13 +608,37 @@ public class GameSystem : MonoBehaviour {
 		yield return new WaitForSeconds(delayTime);
 		Dictionary<TilePoint, Data.TileTypes> stack = FindMatch(cells);
         canDoInput = false;
-		if (stack.Count>0) {
-			CheckMatch3(stack);
-		} else {
-			DoSwapTile(a, b);
-			DoSwapMotion(a.transform, b.transform);
-			ReadyGameTurn();
-		}
+
+        if (playerHumanTurn)
+        {
+            if (stack.Count > 0)
+            {
+                CheckMatch3(stack);
+            }
+            else
+            {
+                DoSwapTile(a, b);
+                DoSwapMotion(a.transform, b.transform);
+                isDoing = false;
+                canDoInput = true;
+            }
+        }
+
+        //AI turn
+        else
+        {
+            if (stack.Count > 0)
+            {
+                DoSwapMotion(a.transform, b.transform);
+                CheckMatch3(stack);
+            }
+            else
+            {
+                DoSwapTile(a, b);
+                DoAITurn();
+            }
+        }
+	
 	}
     
 	// Click Event - highlighting the piece the playerr is holding to swipe
@@ -632,9 +684,224 @@ public class GameSystem : MonoBehaviour {
         SceneManager.LoadScene("BTMap");
     }
 
-	// Start Game - setting the level
-	void Start () {
-		isDoing = false;
+    private void CalculateElementEffect(Data.TileTypes attackElementType, Data.TileTypes targetElementType)
+    {
+        if (attackElementType == Data.TileTypes.Blue)
+        {
+            WaterElementEffect(targetElementType);
+        }
+        else if (attackElementType == Data.TileTypes.Green)
+        {
+            //Heal the player who swiped
+            if (playerHumanTurn)
+            {
+                pcControl.SetHealthUp(healValue);
+            }
+            else
+            {
+                npcControl.SetHealthUp(healValue);
+            }
+        }
+        else if (attackElementType == Data.TileTypes.Magnet)
+        {
+            MagnetElementEffect(targetElementType);
+        }
+        else if (attackElementType == Data.TileTypes.Red)
+        {
+            FireElementEffect(targetElementType);
+        }
+        else if (attackElementType == Data.TileTypes.White)
+        {
+            bonusTurns++;
+        }
+        else if (attackElementType == Data.TileTypes.Yellow)
+        {
+            LightningElementEffect(targetElementType);
+        }
+
+
+    }
+
+    //Functions handle the effects of each element with the target element
+    private void WaterElementEffect(Data.TileTypes targetElementType)
+    {
+        if (targetElementType == Data.TileTypes.Blue)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Green)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Magnet)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Red)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.White)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Yellow)
+        {
+
+        }
+    }
+    private void LeafElementEffect(Data.TileTypes targetElementType)
+    {
+        if (targetElementType == Data.TileTypes.Blue)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Green)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Magnet)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Red)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.White)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Yellow)
+        {
+
+        }
+    }
+    private void MagnetElementEffect(Data.TileTypes targetElementType)
+    {
+        if (targetElementType == Data.TileTypes.Blue)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Green)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Magnet)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Red)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.White)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Yellow)
+        {
+
+        }
+    }
+    private void FireElementEffect(Data.TileTypes targetElementType)
+    {
+        if (targetElementType == Data.TileTypes.Blue)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Green)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Magnet)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Red)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.White)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Yellow)
+        {
+
+        }
+    }
+    private void IceElementEffect(Data.TileTypes targetElementType)
+    {
+        if (targetElementType == Data.TileTypes.Blue)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Green)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Magnet)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Red)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.White)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Yellow)
+        {
+
+        }
+    }
+    private void LightningElementEffect(Data.TileTypes targetElementType)
+    {
+        if (targetElementType == Data.TileTypes.Blue)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Green)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Magnet)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Red)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.White)
+        {
+
+        }
+        else if (targetElementType == Data.TileTypes.Yellow)
+        {
+
+        }
+    }
+
+    // Start Game - setting the level
+    void Start () {
+
+        //Initialize values for player to start
+        isDoing = false;
+        canDoInput = true;
+        playerHumanTurn = true;
+
+        //Set the elements for the player and the enemy
+        int pcControlElement = Random.Range(0, 6);
+        pcControl.SetElement(pcControlElement);
+        pcControl.elementSprite.sprite = sprites[pcControlElement];
+        int npcControlElement = Random.Range(0, 6);
+        npcControl.elementSprite.sprite = sprites[npcControlElement];
+        npcControl.SetElement(npcControlElement);
+
 		SetupAudioSource();
 		choice.enabled = false;
 		CreateTileGrid();
@@ -644,7 +911,6 @@ public class GameSystem : MonoBehaviour {
 			if (stack.Count<1) break;
 		}
 		DisplayTileGrid();
-		ReadyGameTurn();
         //StartCoroutine(RandomMonsterAttack(Random.Range(3f, 6f))); -------------------------------------------------------------------------------------------------- not sure why? 
 	}
 

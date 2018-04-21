@@ -10,12 +10,14 @@ public class PcControl : MonoBehaviour {
 	public GameObject slashEffect;
     public GameObject bloodEffect;
     public Slider hpBar;
-    public SpriteRenderer idleSprite, attackSprite, damageSprite;
+    public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite;
     SpriteRenderer sRender;
 	
 	float healthPoint = 1f;
 
     Animator animator;
+
+    public Data.TileTypes baseElement;
     
     void Start()
     {
@@ -59,7 +61,7 @@ public class PcControl : MonoBehaviour {
             instance.transform.localPosition = transform.localPosition + new Vector3(0f, 100f, 0f);
     }
 
-	void SetHealthPoint(float point){
+	public void SetHealthPoint(float point){
 		if (point<0f) point = 1f;
 		if (point>1f) point = 1f;
 		TweenParms parms = new TweenParms().Prop("sliderValue", point).Ease(EaseType.EaseOutQuart);
@@ -71,16 +73,31 @@ public class PcControl : MonoBehaviour {
 		SetHealthPoint(healthPoint - damage);
 	}
 
-	public void Attack(){
+    public void SetHealthUp(float heal)
+    {
+        SetHealthPoint(healthPoint + heal);
+    }
+
+    public void Attack(){
         if (animator) animator.CrossFade("Attack", 0.2f);
         StartCoroutine(DoAttack(0.5f));
 		StartCoroutine( DoneAttack(0.5f) );
 	}
-    public void Damage()
+    public void Damage(float damage)
     {
         if (animator) animator.CrossFade("Damage", 0.2f);
         StartCoroutine(DoDamage(0.1f));
         StartCoroutine(DoneDamage(0.1f));
-        SetHealthDamage(0.1f);
+        SetHealthDamage(damage);
+    }
+
+    public void SetElement(int randomElement)
+    {
+        baseElement = (Data.TileTypes)randomElement + 1;
+    }
+
+    public Data.TileTypes GetElement()
+    {
+        return baseElement;
     }
 }
