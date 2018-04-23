@@ -77,7 +77,10 @@ public class GameSystem : MonoBehaviour {
     public bool wasMatch3 = false;
 
     public float healValue = 0.2f;
+
     private int bonusTurns = 0;
+    private int lastStackCount = 0;
+    private bool nullifyAttack = false;
 
 	// Setup Audio Source - fuck the bar that took me 5h.
 	void SetupAudioSource(){
@@ -403,14 +406,21 @@ public class GameSystem : MonoBehaviour {
 
     void CompleteAttack(bool isPlayerHuman)
     {
-        if (isPlayerHuman)
+        if (!nullifyAttack)
         {
-            StartCoroutine(AttackMonster(0.7f));
-            StartCoroutine(FillEmpty(0.5f));
+            if (isPlayerHuman)
+            {
+                StartCoroutine(AttackMonster(0.7f));
+                StartCoroutine(FillEmpty(0.5f));
+            }
+            else
+            {
+                StartCoroutine(AttackPlayer(0.7f));
+                StartCoroutine(FillEmpty(0.5f));
+            }
         }
         else
         {
-            StartCoroutine(AttackPlayer(0.7f));
             StartCoroutine(FillEmpty(0.5f));
         }
     }
@@ -597,9 +607,13 @@ public class GameSystem : MonoBehaviour {
 		yield return new WaitForSeconds(delayTime);
 		Dictionary<TilePoint, Data.TileTypes> stack = FindMatch(cells);
 		if (stack.Count>0) {
-			CheckMatch3(stack);
+            lastStackCount = stack.Count;
+            nullifyAttack = false;
+            CheckMatch3(stack);
 		} else {
-			ReadyGameTurn();
+            lastStackCount = 0;
+            nullifyAttack = false;
+            ReadyGameTurn();
 		}
 	}
 
@@ -613,6 +627,7 @@ public class GameSystem : MonoBehaviour {
         {
             if (stack.Count > 0)
             {
+                lastStackCount = stack.Count;
                 CheckMatch3(stack);
             }
             else
@@ -629,6 +644,7 @@ public class GameSystem : MonoBehaviour {
         {
             if (stack.Count > 0)
             {
+                lastStackCount = stack.Count;
                 DoSwapMotion(a.transform, b.transform);
                 CheckMatch3(stack);
             }
@@ -684,6 +700,41 @@ public class GameSystem : MonoBehaviour {
         SceneManager.LoadScene("BTMap");
     }
 
+    private float CalculateHealValue()
+    {
+        if (lastStackCount == 3)
+        {
+            healValue = 0.2f;
+        }
+        else if (lastStackCount == 4)
+        {
+            healValue = 0.32f;
+        }
+        else if (lastStackCount > 4)
+        {
+            healValue = 0.45f;
+        }
+
+        return healValue;
+    }
+    private int CalculateBonusTurns()
+    {
+        if (lastStackCount == 3)
+        {
+            bonusTurns++;
+        }
+        else if (lastStackCount == 4)
+        {
+            bonusTurns = bonusTurns+2;
+        }
+        else if (lastStackCount > 4)
+        {
+            bonusTurns= bonusTurns+3;
+        }
+
+        return bonusTurns;
+    }
+
     private void CalculateElementEffect(Data.TileTypes attackElementType, Data.TileTypes targetElementType)
     {
         if (attackElementType == Data.TileTypes.Blue)
@@ -695,11 +746,17 @@ public class GameSystem : MonoBehaviour {
             //Heal the player who swiped
             if (playerHumanTurn)
             {
+                healValue = CalculateHealValue();
                 pcControl.SetHealthUp(healValue);
+                Debug.Log("Player healed: " + healValue);
+                nullifyAttack = true;
             }
             else
             {
+                healValue = CalculateHealValue();
                 npcControl.SetHealthUp(healValue);
+                Debug.Log("Enemy healed: " + healValue);
+                nullifyAttack = true;
             }
         }
         else if (attackElementType == Data.TileTypes.Magnet)
@@ -712,7 +769,8 @@ public class GameSystem : MonoBehaviour {
         }
         else if (attackElementType == Data.TileTypes.White)
         {
-            bonusTurns++;
+            bonusTurns = CalculateBonusTurns();
+            Debug.Log("Bonus turns: " + bonusTurns);
         }
         else if (attackElementType == Data.TileTypes.Yellow)
         {
