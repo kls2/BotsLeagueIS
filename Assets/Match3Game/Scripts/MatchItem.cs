@@ -26,17 +26,15 @@ public class MatchItem : MonoBehaviour {
 	}
 
 
-    /*
+   
     // sparkle and gass particle effect from original bought game - study how to deal with it later on
     void Start () {
-		flashPrefab = new GameObject[]{
-			Resources.Load("Prefabs/FlashEffect", typeof(GameObject)) as GameObject,
-			Resources.Load("Prefabs/GlowEffect", typeof(GameObject)) as GameObject
-		};
-		StartCoroutine( DoFlashEffect(UnityEngine.Random.Range(1f,3f)) );
+		//flashPrefab = new GameObject[]{
+		//	Resources.Load("Prefabs/FlashEffect", typeof(GameObject)) as GameObject,
+		//	Resources.Load("Prefabs/GlowEffect", typeof(GameObject)) as GameObject
+		//};
+		//StartCoroutine( DoFlashEffect(UnityEngine.Random.Range(1f,3f)) );
 	}
-
-    */
     
 
     

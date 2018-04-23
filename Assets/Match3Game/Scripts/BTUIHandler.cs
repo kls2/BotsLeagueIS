@@ -2,11 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class BTUIHandler : MonoBehaviour {
     //BTHome
+    [SerializeField] private GameObject settingsPanel;
+    [SerializeField] private Image settingsButton;
+    [SerializeField] private Sprite settingsButtonDefault;
+    private bool isSettingsPanelOn;
+    private void Start()
+    {
+        isSettingsPanelOn = false;
+        settingsPanel.SetActive(false);
+    }
 
-	public void PlayButtonClick()
+    public void PlayButtonClick()
     {
         SceneManager.LoadScene("BTMap");
 	}
@@ -14,13 +24,22 @@ public class BTUIHandler : MonoBehaviour {
     {
         SceneManager.LoadScene("BTEditAvatar");
     }
-
-    /* Make settings button create pop up to change audio, sound fx on/off, see credits, etc
-    public void SettingsButton()
+    public void ShowSettingsPanel()
     {
-        SceneManager.LoadScene("");
+        if (!isSettingsPanelOn)
+        {
+            settingsPanel.SetActive(true);
+            isSettingsPanelOn = !isSettingsPanelOn;
+        }
+        else
+        {
+            settingsPanel.SetActive(false);
+            isSettingsPanelOn = !isSettingsPanelOn;
+            settingsButton.sprite = settingsButtonDefault;
+
+        }
     }
-    */
+
         public void FacebookButton()
     {
         Application.OpenURL("https:www.facebook.com/BotsLeague/");

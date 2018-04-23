@@ -52,7 +52,7 @@ public class GameSystem : MonoBehaviour {
 	public GameObject explosionPrefab;
 	public Transform effectArea;
 	
-	//public GameObject[] starEffectPrefabs;
+	public GameObject[] starEffectPrefabs;
    
 	public SpriteRenderer choice;
 	List<MatchItem> tiles;
@@ -341,21 +341,36 @@ public class GameSystem : MonoBehaviour {
     }
 
 
-    /*
 	// Star Flash Effect
 	void DoStarEffect(Vector3 pos, int type){
-		if (type<1) return;
+
+        Vector3 targetPosition = Vector3.zero;
+
+        if (playerHumanTurn)
+        {
+            if(type != 5)
+                targetPosition = new Vector3(200, 300, 0);
+            else
+                targetPosition = new Vector3(-200, 300, 0);
+        }
+        else
+        {
+            if (type != 5)
+                targetPosition = new Vector3(-200, 300, 0);
+            else
+                targetPosition = new Vector3(200, 300, 0);
+        }
+
+        if (type<1) return;
 		pos += grid.transform.localPosition + puzzle.transform.localPosition;
 		GameObject starEffectObject = Instantiate(starEffectPrefabs[type-1]) as GameObject;
 		Transform starEffect = starEffectObject.transform;
 		starEffect.parent = panel.transform;
-		Vector3[] path = new Vector3[] { pos, new Vector3(0,100,0), new Vector3(-200,300,0) };
+		Vector3[] path = new Vector3[] { pos, new Vector3(0,100,0), targetPosition };
 		starEffect.localPosition = pos;
 		//HOTween.To(starEffect, 0.8f, new TweenParms().Prop("localPosition", new PlugVector3Path(path, EaseType.Linear, true).OrientToPath(0.1f)));
         HOTween.To(starEffect, 0.8f, new TweenParms().Prop("localPosition", new PlugVector3Path(path, EaseType.Linear, true)).Ease(EaseType.Linear));
     }
-
-    */
 
 	// Fill Empty Tile after Matching
 	IEnumerator FillEmpty(float delayTime) {
@@ -390,7 +405,11 @@ public class GameSystem : MonoBehaviour {
             int index = (type - 1) * 4;
             deleteAnimation = StartCoroutine(animateDelete(item, index));
 
-            //  DoStarEffect(instance.transform.localPosition, type);
+            GameObject instance = Instantiate(explosionPrefab) as GameObject;
+            instance.transform.parent = effectArea;
+            instance.transform.localPosition = new Vector3(item.point.x * cellWidth, item.point.y * -cellHeight, -5f);
+
+            DoStarEffect(instance.transform.localPosition, type);
         }
         yield return deleteAnimation;
 
@@ -513,10 +532,14 @@ public class GameSystem : MonoBehaviour {
         {
             isDoing = false;
             canDoInput = true;
+            pcControl.EnableActiveBackground(true);
+            npcControl.EnableActiveBackground(false);
             DebugFindHint();
         }
         else
         {
+            pcControl.EnableActiveBackground(false);
+            npcControl.EnableActiveBackground(true);
             DoAITurn();
         }
 	}
@@ -951,6 +974,7 @@ public class GameSystem : MonoBehaviour {
         isDoing = false;
         canDoInput = true;
         playerHumanTurn = true;
+        pcControl.EnableActiveBackground(true);
 
         //Set the elements for the player and the enemy
         int pcControlElement = Random.Range(0, 6);

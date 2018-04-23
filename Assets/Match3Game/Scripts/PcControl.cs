@@ -10,7 +10,7 @@ public class PcControl : MonoBehaviour {
 	public GameObject slashEffect;
     public GameObject bloodEffect;
     public Slider hpBar;
-    public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite;
+    public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite,activeBackground;
     SpriteRenderer sRender;
 	
 	float healthPoint = 1f;
@@ -99,5 +99,10 @@ public class PcControl : MonoBehaviour {
     public Data.TileTypes GetElement()
     {
         return baseElement;
+    }
+
+    public void EnableActiveBackground(bool enable)
+    {
+        activeBackground.enabled = enable;
     }
 }
