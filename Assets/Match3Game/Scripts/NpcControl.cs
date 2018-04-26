@@ -10,7 +10,7 @@ public class NpcControl : MonoBehaviour {
     public GameObject slashEffect;
     public GameObject bloodEffect;
     public Slider hpBar;
-    public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite,activeBackground;
+    public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite,activeBackground, freezeStatus;
     SpriteRenderer sRender;
 	
 	float healthPoint = 1f;
@@ -31,6 +31,7 @@ public class NpcControl : MonoBehaviour {
     {
         animator = GetComponent<Animator>();
         sRender = GetComponent<SpriteRenderer>();
+        freezeStatus.enabled = false;
     }
 
     IEnumerator DoneAttack(float delayTime)
@@ -119,6 +120,11 @@ public class NpcControl : MonoBehaviour {
     public void EnableActiveBackground(bool enable)
     {
         activeBackground.enabled = enable;
+    }
+
+    public void EnableFreezeStatus(bool enable)
+    {
+        freezeStatus.enabled = enable;
     }
 }
 

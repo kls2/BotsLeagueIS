@@ -522,6 +522,10 @@ public class GameSystem : MonoBehaviour {
         if (bonusTurns == 0)
         {
             playerHumanTurn = !playerHumanTurn;
+
+            //Disable freeze icon
+            pcControl.EnableFreezeStatus(false);
+            npcControl.EnableFreezeStatus(false);
         }
         else
         {
@@ -794,6 +798,16 @@ public class GameSystem : MonoBehaviour {
         {
             bonusTurns = CalculateBonusTurns();
             Debug.Log("Bonus turns: " + bonusTurns);
+
+            if (playerHumanTurn)
+            {
+                npcControl.EnableFreezeStatus(true);
+            }
+            else
+            {
+                pcControl.EnableFreezeStatus(true);
+            }
+
         }
         else if (attackElementType == Data.TileTypes.Yellow)
         {
