@@ -16,6 +16,7 @@ public class RobotPartSelector : MonoBehaviour {
     [SerializeField] private List<Sprite> robotRightArms;
     [SerializeField] private List<Sprite> robotLeftArms;
     [SerializeField] private List<Sprite> robotLegs;
+    [SerializeField] private List<Sprite> robotBaseElements;
 
     //The current robot parts buttons
     [SerializeField] private Button currentRobotAntenna;
@@ -25,6 +26,7 @@ public class RobotPartSelector : MonoBehaviour {
     [SerializeField] private Button currentRobotRightArm;
     [SerializeField] private Button currentRobotLeftArm;
     [SerializeField] private Button currentRobotLegs;
+    [SerializeField] private Button currentRobotBaseElement;
 
     //The current robot parts Images
     [SerializeField] private Image currentRobotAntennaImg;
@@ -34,8 +36,11 @@ public class RobotPartSelector : MonoBehaviour {
     [SerializeField] private Image currentRobotRightArmImg;
     [SerializeField] private Image currentRobotLeftArmImg;
     [SerializeField] private Image currentRobotLegsImg;
+    [SerializeField] private Image currentRobotBaseElementImg;
 
-    public int robotParts = 5;
+    //Scroll rect snapper
+    [SerializeField] private ScrollRectSnap scrollSnapper;
+
     private Image lastSelectedPart;
 
     private enum RobotParts
@@ -46,7 +51,8 @@ public class RobotPartSelector : MonoBehaviour {
         Body,
         ArmRight,
         ArmLeft,
-        Legs
+        Legs,
+        BaseElement
     };
 
     private RobotParts currentRobotPart = RobotParts.Antenna;
@@ -65,13 +71,22 @@ public class RobotPartSelector : MonoBehaviour {
         //Get the correct parts and display them
         List<Sprite> parts = GetParts(robotPartType);
 
-        for (int i = 0; i < robotParts; i++)
+        List<Button> buttons = new List<Button>();
+        float offset = 0.0f;
+
+        for (int i = 0; i < parts.Count; i++)
         {
             GameObject uiSelectorRobotPart = Instantiate(robotPartPrefab);
             uiSelectorRobotPart.GetComponent<Image>().sprite = parts[i];
             uiSelectorRobotPart.GetComponent<Button>().onClick.AddListener(delegate { SetBodyPart(uiSelectorRobotPart); });
-            uiSelectorRobotPart.transform.parent = content.transform;
+            uiSelectorRobotPart.transform.SetParent(content.transform);
+            uiSelectorRobotPart.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            uiSelectorRobotPart.GetComponent<RectTransform>().anchoredPosition += new Vector2(offset,0.0f);
+            offset += uiSelectorRobotPart.GetComponent<RectTransform>().rect.width;
+            buttons.Add(uiSelectorRobotPart.GetComponent<Button>());
         }
+
+        scrollSnapper.SetButtons(buttons);
     }
 
     private void SetBodyPart(GameObject robotPart)
@@ -106,9 +121,13 @@ public class RobotPartSelector : MonoBehaviour {
         {
             return robotLeftArms;
         }
-        else
+        else if (robotPartType == RobotParts.Legs)
         {
             return robotLegs;
+        }
+        else
+        {
+            return robotBaseElements;
         }
     }
 
@@ -116,6 +135,8 @@ public class RobotPartSelector : MonoBehaviour {
 	void Start () {
         CreateRobotParts(currentRobotPart);
         lastSelectedPart = currentRobotAntennaImg;
+
+        LoadAvatar();
 
         //Add the event listeners for the buttons
         currentRobotAntenna.onClick.AddListener(delegate { CreateRobotParts(RobotParts.Antenna); lastSelectedPart = currentRobotAntennaImg; });
@@ -127,7 +148,6 @@ public class RobotPartSelector : MonoBehaviour {
         });
         currentRobotBody.onClick.AddListener(delegate { CreateRobotParts(RobotParts.Body);
             lastSelectedPart = currentRobotBodyImg;
-            Debug.Log(lastSelectedPart);
         });
         currentRobotRightArm.onClick.AddListener(delegate { CreateRobotParts(RobotParts.ArmRight);
             lastSelectedPart = currentRobotRightArmImg; });
@@ -137,10 +157,37 @@ public class RobotPartSelector : MonoBehaviour {
         currentRobotLegs.onClick.AddListener(delegate { CreateRobotParts(RobotParts.Legs);
             lastSelectedPart = currentRobotLegsImg;
         });
+        currentRobotBaseElement.onClick.AddListener(delegate {
+            CreateRobotParts(RobotParts.BaseElement);
+            lastSelectedPart = currentRobotBaseElementImg;
+        });
     }
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+
+    public void SaveAvatar()
+    {
+        //Store all the robot parts
+        GameState.control.antennaIndex = robotAntennas.IndexOf(currentRobotAntennaImg.sprite);
+        GameState.control.headIndex = robotHeads.IndexOf(currentRobotHeadImg.sprite);
+        GameState.control.eyesIndex = robotEyes.IndexOf(currentRobotEyesImg.sprite);
+        GameState.control.bodyIndex = robotBodies.IndexOf(currentRobotBodyImg.sprite);
+        GameState.control.rightArmIndex = robotRightArms.IndexOf(currentRobotRightArmImg.sprite);
+        GameState.control.leftArmIndex = robotLeftArms.IndexOf(currentRobotLeftArmImg.sprite);
+        GameState.control.legIndex = robotLegs.IndexOf(currentRobotLegsImg.sprite);
+        GameState.control.baseElementIndex = robotBaseElements.IndexOf(currentRobotBaseElementImg.sprite);
+        GameState.control.Save();
+    }
+
+    public void LoadAvatar()
+    {
+        GameState.control.Load();
+
+        currentRobotAntennaImg.sprite = robotAntennas[GameState.control.antennaIndex];
+        currentRobotHeadImg.sprite = robotHeads[GameState.control.headIndex];
+        currentRobotEyesImg.sprite = robotEyes[GameState.control.eyesIndex];
+        currentRobotBodyImg.sprite = robotBodies[GameState.control.bodyIndex];
+        currentRobotRightArmImg.sprite = robotRightArms[GameState.control.rightArmIndex];
+        currentRobotLeftArmImg.sprite = robotLeftArms[GameState.control.leftArmIndex];
+        currentRobotLegsImg.sprite = robotLegs[GameState.control.legIndex];
+        currentRobotBaseElementImg.sprite = robotBaseElements[GameState.control.baseElementIndex];
+    }
 }

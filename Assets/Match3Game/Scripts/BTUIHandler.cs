@@ -24,6 +24,13 @@ public class BTUIHandler : MonoBehaviour {
     {
         SceneManager.LoadScene("BTEditAvatar");
     }
+
+    public void MainMenuButtonClick()
+    {
+        SceneManager.LoadScene("BTHome");
+    }
+
+
     public void ShowSettingsPanel()
     {
         if (!isSettingsPanelOn)
