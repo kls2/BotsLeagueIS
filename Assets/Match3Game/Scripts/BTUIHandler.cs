@@ -4,12 +4,18 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class BTUIHandler : MonoBehaviour {
+public class BTUIHandler : MonoBehaviour
+{
     //BTHome
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private Image settingsButton;
     [SerializeField] private Sprite settingsButtonDefault;
     private bool isSettingsPanelOn;
+
+    //BTGameplay
+    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private GameObject winPanel;
+
     private void Start()
     {
         isSettingsPanelOn = false;
@@ -19,7 +25,7 @@ public class BTUIHandler : MonoBehaviour {
     public void PlayButtonClick()
     {
         SceneManager.LoadScene("BTMap");
-	}
+    }
     public void EditAvatarButtonClick()
     {
         SceneManager.LoadScene("BTEditAvatar");
@@ -47,25 +53,25 @@ public class BTUIHandler : MonoBehaviour {
         }
     }
 
-        public void FacebookButton()
+    public void FacebookButton()
     {
         Application.OpenURL("https:www.facebook.com/BotsLeague/");
     }
 
-    //BTMap
-            //Click on level to go to level
-            //settings?
+    public void ShowGameOverPanel()
+    {
+        gameOverPanel.SetActive(true);
+    }
 
+    public void ShowWinPanel()
+    {
+        winPanel.SetActive(true);
+    }
 
-    //BTGameplay
-            //PauseButton
-
-
-    //BTEditAvatar
-            //settings?
-
-
-
+    public void PlayNextLevel()
+    {
+        SceneManager.LoadScene("BTGameplay");
+    }
 }
 
 

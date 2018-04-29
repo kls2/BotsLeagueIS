@@ -1160,6 +1160,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a85a313a6b637846990f38408297050, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  levelsUI:
+  - levelCogImg: {fileID: 646397526}
+    levelNumTxt: {fileID: 2119054118}
+  - levelCogImg: {fileID: 809130492}
+    levelNumTxt: {fileID: 1003256751}
+  - levelCogImg: {fileID: 1636887112}
+    levelNumTxt: {fileID: 1559945447}
+  levelsButtons:
+  - {fileID: 646397525}
+  - {fileID: 809130491}
+  - {fileID: 1636887111}
+  levelsNumButtons:
+  - {fileID: 2119054120}
+  - {fileID: 1003256753}
+  - {fileID: 1559945449}
 --- !u!1 &768132699
 GameObject:
   m_ObjectHideFlags: 0
@@ -1759,6 +1774,8 @@ MonoBehaviour:
   settingsButton: {fileID: 1862892733}
   settingsButtonDefault: {fileID: 21300000, guid: 2af3a845012a4264c8bc0abd4f4a3a28,
     type: 3}
+  gameOverPanel: {fileID: 0}
+  winPanel: {fileID: 0}
 --- !u!1 &1141919467
 GameObject:
   m_ObjectHideFlags: 0

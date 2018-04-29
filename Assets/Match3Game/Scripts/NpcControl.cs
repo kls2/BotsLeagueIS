@@ -7,10 +7,16 @@ using Holoville.HOTween.Plugins;
 /// To draw damage motion with npc monster.
 /// </summary>
 public class NpcControl : MonoBehaviour {
+
+    public GameSystem gameSystem;
+
     public GameObject slashEffect;
     public GameObject bloodEffect;
     public Slider hpBar;
     public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite,activeBackground, freezeStatus;
+
+    public SpriteRenderer npcAntenna, npcHead, npcEyes, npcBody, npcRightArm, npcLeftArm, npcLegs;
+
     SpriteRenderer sRender;
 	
 	float healthPoint = 1f;
@@ -37,21 +43,23 @@ public class NpcControl : MonoBehaviour {
     IEnumerator DoneAttack(float delayTime)
     {
         yield return new WaitForSeconds(delayTime);
-        if (idleSprite) idleSprite.enabled = true;
+        if (idleSprite) idleSprite.enabled = false;
         if (attackSprite) attackSprite.enabled = false;
+        if (animator) animator.CrossFade("Idle", 0.2f);
     }
 
     IEnumerator DoneDamage(float delayTime)
     {
 		yield return new WaitForSeconds(delayTime);
-        if (idleSprite) idleSprite.enabled = true;
+        if (idleSprite) idleSprite.enabled = false;
         if (damageSprite) damageSprite.enabled = false;
-	}
+        if (animator) animator.CrossFade("Idle", 0.2f);
+    }
 
     IEnumerator DoAttack(float delayTime)
     {
         if (idleSprite) idleSprite.enabled = false;
-        if (attackSprite) attackSprite.enabled = true;
+        if (attackSprite) attackSprite.enabled = false;
         yield return new WaitForSeconds(delayTime);
         GameObject instance = Instantiate(slashEffect) as GameObject;
         instance.transform.parent = transform.parent;
@@ -59,7 +67,7 @@ public class NpcControl : MonoBehaviour {
     }
 
 	IEnumerator DoDamage(float delayTime) {
-        if (damageSprite) damageSprite.enabled = true;
+        if (damageSprite) damageSprite.enabled = false;
         if (idleSprite) idleSprite.enabled = false;
 		yield return new WaitForSeconds(delayTime);
         GameObject instance = Instantiate(bloodEffect) as GameObject;
@@ -71,7 +79,7 @@ public class NpcControl : MonoBehaviour {
     }
 	
 	public void SetHealthPoint(float point){
-		if (point<0f) point = 1f;
+		if (point<0f) point = 0f;
 		if (point>1f) point = 1f;
 		TweenParms parms = new TweenParms().Prop("sliderValue", point).Ease(EaseType.EaseOutQuart);
 		HOTween.To(hpBar, 0.1f, parms );
@@ -99,6 +107,10 @@ public class NpcControl : MonoBehaviour {
         // Probably destroy the game object or something
     }
 
+    public float GetHealthPoint()
+    {
+        return healthPoint;
+    }
 
     public void Attack()
     {
@@ -125,6 +137,24 @@ public class NpcControl : MonoBehaviour {
     public void EnableFreezeStatus(bool enable)
     {
         freezeStatus.enabled = enable;
+    }
+
+    public void RandomizeEnemyParts()
+    {
+        int rand = Random.Range(0, gameSystem.GetRobotAntennas().Length);
+        npcAntenna.sprite = gameSystem.GetRobotAntennas()[rand];
+        rand = Random.Range(0, gameSystem.GetRobotHeads().Length);
+        npcHead.sprite = gameSystem.GetRobotHeads()[rand];
+        rand = Random.Range(0, gameSystem.GetRobotEyes().Length);
+        npcEyes.sprite = gameSystem.GetRobotEyes()[rand];
+        rand = Random.Range(0, gameSystem.GetRobotBodies().Length);
+        npcBody.sprite = gameSystem.GetRobotBodies()[rand];
+        rand = Random.Range(0, gameSystem.GetRobotRightArms().Length);
+        npcRightArm.sprite = gameSystem.GetRobotRightArms()[rand];
+        rand = Random.Range(0, gameSystem.GetRobotLeftArms().Length);
+        npcLeftArm.sprite = gameSystem.GetRobotLeftArms()[rand];
+        rand = Random.Range(0, gameSystem.GetRobotLegs().Length);
+        npcLegs.sprite = gameSystem.GetRobotLegs()[rand];
     }
 }
 

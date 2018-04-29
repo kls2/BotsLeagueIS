@@ -21,7 +21,9 @@ public class GameState : MonoBehaviour {
     //Levels Data
     [HideInInspector] public Level[] levels;
 
+    public int currentLevelIndex;
     private Level currentLevel;
+
 
     private void Awake()
     {
@@ -46,11 +48,15 @@ public class GameState : MonoBehaviour {
             levels[i].unlocked = 0;
             levels[i].completed = 0;
         }
+
+        //First level should always be unlocked
+        levels[0].unlocked = 1;
     }
 
     public void SetCurrentLevel(int indexOfLevel)
     {
         currentLevel = levels[indexOfLevel];
+        currentLevelIndex = indexOfLevel;
     }
     public void SetCurrentLevelState(byte unlocked, byte completed)
     {
@@ -118,6 +124,7 @@ public class GameState : MonoBehaviour {
 
                 //Load the level data
                 levels[0].unlocked = data.Level1Unlocked;
+                levels[0].unlocked = 1;
                 levels[0].completed = data.Level1Completed;
                 levels[1].unlocked = data.Level2Unlocked;
                 levels[1].completed = data.Level2Completed;
@@ -137,7 +144,7 @@ public class GameState : MonoBehaviour {
             baseElementIndex = 0;
 
             //Load the level data
-            levels[0].unlocked = 0;
+            levels[0].unlocked = 1;
             levels[0].completed = 0;
             levels[1].unlocked = 0;
             levels[1].completed = 0;

@@ -7,13 +7,18 @@ using Holoville.HOTween.Plugins;
 /// To draw attack animation with player.
 /// </summary>
 public class PcControl : MonoBehaviour {
-	public GameObject slashEffect;
+
+    public GameSystem gameSystem;
+
+    public GameObject slashEffect;
     public GameObject bloodEffect;
     public Slider hpBar;
     public SpriteRenderer idleSprite, attackSprite, damageSprite,elementSprite,activeBackground, freezeStatus;
     SpriteRenderer sRender;
-	
-	float healthPoint = 1f;
+
+    public SpriteRenderer pcAntenna, pcHead, pcEyes, pcBody, pcRightArm, pcLeftArm, pcLegs;
+
+    float healthPoint = 1f;
 
     Animator animator;
 
@@ -28,20 +33,22 @@ public class PcControl : MonoBehaviour {
 
 	IEnumerator DoneAttack(float delayTime) {
 		yield return new WaitForSeconds(delayTime);
-        if (idleSprite) idleSprite.enabled = true;
+        if (idleSprite) idleSprite.enabled = false;
 		if (attackSprite) attackSprite.enabled = false;
-	}
+        if (animator) animator.CrossFade("Idle", 0.2f);
+    }
 
     IEnumerator DoneDamage(float delayTime)
     {
         yield return new WaitForSeconds(delayTime);
-        if (idleSprite) idleSprite.enabled = true;
-        //if (damageSprite) damageSprite.enabled = false;
+        if (idleSprite) idleSprite.enabled = false;
+        if (damageSprite) damageSprite.enabled = false;
+        if (animator) animator.CrossFade("Idle", 0.2f);
     }
 
 	IEnumerator DoAttack(float delayTime) {
         if (idleSprite) idleSprite.enabled = false;
-        if (attackSprite) attackSprite.enabled = true;
+        if (attackSprite) attackSprite.enabled = false;
 		yield return new WaitForSeconds(delayTime);
         GameObject instance = Instantiate(slashEffect) as GameObject;
         instance.transform.parent = transform.parent;
@@ -63,12 +70,17 @@ public class PcControl : MonoBehaviour {
     }
 
 	public void SetHealthPoint(float point){
-		if (point<0f) point = 1f;
+		if (point<0f) point = 0f;
 		if (point>1f) point = 1f;
 		TweenParms parms = new TweenParms().Prop("sliderValue", point).Ease(EaseType.EaseOutQuart);
 		HOTween.To(hpBar, 0.1f, parms );
 		healthPoint = point;
 	}
+
+    public float GetHealthPoint()
+    {
+        return healthPoint;
+    }
 
 	void SetHealthDamage(float damage){
 		SetHealthPoint(healthPoint - damage);
@@ -83,7 +95,8 @@ public class PcControl : MonoBehaviour {
         if (animator) animator.CrossFade("Attack", 0.2f);
         StartCoroutine(DoAttack(0.5f));
 		StartCoroutine( DoneAttack(0.5f) );
-	}
+        
+    }
     public void Damage(float damage)
     {
         if (animator) animator.CrossFade("Damage", 0.2f);
@@ -110,5 +123,16 @@ public class PcControl : MonoBehaviour {
     public void EnableFreezeStatus(bool enable)
     {
         freezeStatus.enabled = enable;
+    }
+
+    public void SetPlayerRobotPartsFromAvatar()
+    {
+        pcAntenna.sprite = gameSystem.GetRobotAntennas()[GameState.control.antennaIndex];
+        pcHead.sprite = gameSystem.GetRobotHeads()[GameState.control.headIndex];
+        pcEyes.sprite = gameSystem.GetRobotEyes()[GameState.control.eyesIndex];
+        pcBody.sprite = gameSystem.GetRobotBodies()[GameState.control.bodyIndex];
+        pcRightArm.sprite = gameSystem.GetRobotRightArms()[GameState.control.rightArmIndex];
+        pcLeftArm.sprite = gameSystem.GetRobotLeftArms()[GameState.control.leftArmIndex];
+        pcLegs.sprite = gameSystem.GetRobotLegs()[GameState.control.legIndex];
     }
 }

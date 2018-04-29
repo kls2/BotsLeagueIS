@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Holoville.HOTween;
 using Holoville.HOTween.Plugins;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 // To record the location of data.
 public struct TilePoint {
@@ -21,7 +22,7 @@ public struct TilePoint {
 public class Data {
 	public const int tileWidth = 7;
 	public const int tileHeight = 7;
-	public enum TileTypes  { Empty, White, Red, Blue, Magnet, Green, Yellow, Length };
+	public enum TileTypes  { Empty, White, Green, Blue, Magnet, Red, Yellow, Length };
 }
 
 // To record the location of tile data.
@@ -40,7 +41,17 @@ public class GameSystem : MonoBehaviour {
     //Setting the pieces types (sprite and audio) that will fill the grid
     public Sprite[] sprites; //{"WhiteIce", "RedFire", "BlueWater", "MagnetIron", "GreenLife", "YellowElectricity"};
     public Sprite[] spritesSelected; //{"WhiteIce", "RedFire", "BlueWater", "MagnetIron", "GreenLife", "YellowElectricity"};
-    string[] sounds = new string[]{"PieceWhiteIceAudio", "PieceRedFireAudio", "PieceBlueWaterAudio", "PieceMagnetIronAudio", "PieceGreenLifeAudio", "PieceYellowElectricityAudio"};
+    public Sprite[] baseElementSprites;
+
+    public Sprite[] robotAntennasSprites;
+    public Sprite[] robotHeadSprites;
+    public Sprite[] robotEyesSprites;
+    public Sprite[] robotBodySprites;
+    public Sprite[] robotRightArmSprites;
+    public Sprite[] robotLeftArmSprites;
+    public Sprite[] robotLegsSprites;
+
+    string[] sounds = new string[]{"PieceWhiteIceAudio", "PieceGreenLifeAudio", "PieceBlueWaterAudio", "PieceMagnetIronAudio", "PieceRedFireAudio", "PieceYellowElectricityAudio"};
     public EaseType easeType = EaseType.EaseOutBounce;
 	
 	public const int cellScale = 120;
@@ -51,8 +62,12 @@ public class GameSystem : MonoBehaviour {
 	public GameObject matchItemPrefab;
 	public GameObject explosionPrefab;
 	public Transform effectArea;
-	
-	public GameObject[] starEffectPrefabs;
+
+    public BTUIHandler UIHandler;
+    public Text levelText;
+    public Text levelGameOverText;
+
+    public GameObject[] starEffectPrefabs;
    
 	public SpriteRenderer choice;
 	List<MatchItem> tiles;
@@ -348,14 +363,14 @@ public class GameSystem : MonoBehaviour {
 
         if (playerHumanTurn)
         {
-            if(type != 5)
+            if(type != 2)
                 targetPosition = new Vector3(200, 300, 0);
             else
                 targetPosition = new Vector3(-200, 300, 0);
         }
         else
         {
-            if (type != 5)
+            if (type != 2)
                 targetPosition = new Vector3(-200, 300, 0);
             else
                 targetPosition = new Vector3(200, 300, 0);
@@ -410,16 +425,19 @@ public class GameSystem : MonoBehaviour {
             instance.transform.localPosition = new Vector3(item.point.x * cellWidth, item.point.y * -cellHeight, -5f);
 
             DoStarEffect(instance.transform.localPosition, type);
+
+            
         }
         yield return deleteAnimation;
-
+       
         //Calculates the effect Values
         if (playerHumanTurn)
-            CalculateElementEffect(tileType,npcControl.baseElement);
+            CalculateElementEffect(tileType, npcControl.baseElement);
         else
-            CalculateElementEffect(tileType,pcControl.baseElement);
+            CalculateElementEffect(tileType, pcControl.baseElement);
 
         CompleteAttack(playerHumanTurn);
+
     }
 
 
@@ -519,33 +537,56 @@ public class GameSystem : MonoBehaviour {
 	// Ready Game Turn
 	void ReadyGameTurn(){
 
-        if (bonusTurns == 0)
+        if (pcControl.GetHealthPoint() > 0 && npcControl.GetHealthPoint() > 0)
         {
-            playerHumanTurn = !playerHumanTurn;
+            if (bonusTurns == 0)
+            {
+                playerHumanTurn = !playerHumanTurn;
 
-            //Disable freeze icon
-            pcControl.EnableFreezeStatus(false);
-            npcControl.EnableFreezeStatus(false);
-        }
-        else
-        {
-            bonusTurns--;
-        }
+                //Disable freeze icon
+                pcControl.EnableFreezeStatus(false);
+                npcControl.EnableFreezeStatus(false);
+            }
+            else
+            {
+                bonusTurns--;
+            }
 
-        if (isPlayerHumanTurn())
-        {
-            isDoing = false;
-            canDoInput = true;
-            pcControl.EnableActiveBackground(true);
-            npcControl.EnableActiveBackground(false);
-            DebugFindHint();
+            if (isPlayerHumanTurn())
+            {
+                isDoing = false;
+                canDoInput = true;
+                pcControl.EnableActiveBackground(true);
+                npcControl.EnableActiveBackground(false);
+                DebugFindHint();
+            }
+            else
+            {
+                pcControl.EnableActiveBackground(false);
+                npcControl.EnableActiveBackground(true);
+                DoAITurn();
+            }
         }
-        else
+        else if (pcControl.GetHealthPoint() <= 0)
         {
-            pcControl.EnableActiveBackground(false);
-            npcControl.EnableActiveBackground(true);
-            DoAITurn();
+            //Player Died
+            //Show GameOver
+            levelGameOverText.text = "Level " + (GameState.control.currentLevelIndex + 1);
+            UIHandler.ShowGameOverPanel();
         }
+        else if (npcControl.GetHealthPoint() <= 0)
+        {
+            //Enemy robot died
+            //Show win screen
+            levelText.text = "Level " + (GameState.control.currentLevelIndex + 1);
+            UIHandler.ShowWinPanel();
+            //Set the level to completed and unlocked
+            GameState.control.SetCurrentLevelState(1, 1);
+            GameState.control.levels[GameState.control.currentLevelIndex + 1].unlocked = 1;
+            GameState.control.SetCurrentLevel(GameState.control.currentLevelIndex + 1);
+            GameState.control.Save();
+        }
+        
 	}
 
     bool isPlayerHumanTurn()
@@ -817,6 +858,38 @@ public class GameSystem : MonoBehaviour {
 
     }
 
+    public Sprite[] GetRobotAntennas()
+    {
+        return robotAntennasSprites;
+    }
+
+    public Sprite[] GetRobotHeads()
+    {
+        return robotHeadSprites;
+    }
+
+    public Sprite[] GetRobotEyes()
+    {
+        return robotEyesSprites;
+    }
+
+    public Sprite[] GetRobotBodies()
+    {
+        return robotBodySprites;
+    }
+
+    public Sprite[] GetRobotRightArms()
+    {
+        return robotRightArmSprites;
+    }
+    public Sprite[] GetRobotLeftArms()
+    {
+        return robotLeftArmSprites;
+    }
+    public Sprite[] GetRobotLegs()
+    {
+        return robotLegsSprites;
+    }
     //Functions handle the effects of each element with the target element
     private void WaterElementEffect(Data.TileTypes targetElementType)
     {
@@ -991,12 +1064,15 @@ public class GameSystem : MonoBehaviour {
         pcControl.EnableActiveBackground(true);
 
         //Set the elements for the player and the enemy
-        int pcControlElement = Random.Range(0, 6);
-        pcControl.SetElement(pcControlElement);
-        pcControl.elementSprite.sprite = sprites[pcControlElement];
-        int npcControlElement = Random.Range(0, 6);
-        npcControl.elementSprite.sprite = sprites[npcControlElement];
+        int pcControlElement = GameState.control.baseElementIndex;
+        pcControl.elementSprite.sprite = baseElementSprites[pcControlElement];
+        pcControl.SetElement(pcControlElement + 2);
+        int npcControlElement = Random.Range(2, 6);
+        npcControl.elementSprite.sprite = baseElementSprites[npcControlElement-2];
         npcControl.SetElement(npcControlElement);
+
+        npcControl.RandomizeEnemyParts();
+        pcControl.SetPlayerRobotPartsFromAvatar();
 
 		SetupAudioSource();
 		choice.enabled = false;
