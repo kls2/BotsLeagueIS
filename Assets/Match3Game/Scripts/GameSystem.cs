@@ -57,6 +57,7 @@ public class GameSystem : MonoBehaviour {
 	public const int cellScale = 120;
 	public const int cellWidth = 108;
 	public const int cellHeight = 108;
+    public int currentComboNum = 0;
 
 	public GameObject grid, puzzle, panel;
 	public GameObject matchItemPrefab;
@@ -74,10 +75,15 @@ public class GameSystem : MonoBehaviour {
 	private Cell[,] cells = new Cell[Data.tileWidth, Data.tileHeight];
 	public MatchItem curTile = null;
 
+    public AudioClip[] bgClips;
+
 	public AudioClip[] audioMatchClip = null;
 	public AudioSource[] audioMatchSource = null;
 
-	public PcControl pcControl;  
+    public AudioClip[] comboClip = null;
+    public AudioSource comboAudioSource = null;
+
+    public PcControl pcControl;  
 	public NpcControl npcControl;
     public Sprite[] deleteSprites;
 
@@ -105,8 +111,16 @@ public class GameSystem : MonoBehaviour {
 			audioMatchClip[i] = Resources.Load("Sounds/" + sounds[i], typeof(AudioClip)) as AudioClip;
 			audioMatchSource[i] = gameObject.AddComponent<AudioSource>();
 			audioMatchSource[i].clip = audioMatchClip[i];
-		}
-	}
+            audioMatchSource[i].spatialBlend = 0.0f;
+
+        }
+
+        comboAudioSource = new AudioSource();
+        comboAudioSource = gameObject.AddComponent<AudioSource>();
+        comboAudioSource.volume = 1.0f;
+        comboAudioSource.clip = comboClip[0];
+        comboAudioSource.spatialBlend = 0.0f;
+    }
 
 	// Init Tile Grid
 	public void InitTileGrid() {
@@ -437,7 +451,8 @@ public class GameSystem : MonoBehaviour {
             CalculateElementEffect(tileType, pcControl.baseElement);
 
         CompleteAttack(playerHumanTurn);
-
+        PlayComboSound(currentComboNum);
+        currentComboNum++;
     }
 
 
@@ -681,6 +696,7 @@ public class GameSystem : MonoBehaviour {
 		} else {
             lastStackCount = 0;
             nullifyAttack = false;
+            currentComboNum = 0;
             ReadyGameTurn();
 		}
 	}
@@ -1054,6 +1070,28 @@ public class GameSystem : MonoBehaviour {
         }
     }
 
+    private void PlayComboSound(int comboNum)
+    {
+        if (comboNum > comboClip.Length)
+        {
+            comboNum = comboClip.Length - 1;
+        }
+        if (comboNum > 0)
+        {
+            comboAudioSource.PlayOneShot(comboClip[comboNum-1]);
+        }
+    }
+
+    private void PlayCurrentLevelClip()
+    {
+        int clipIndex = GameState.control.currentLevelIndex;
+        if (clipIndex > bgClips.Length)
+        {
+            clipIndex = bgClips.Length - 1;
+        }
+        AudioManager.instance.PlayAudioClip(bgClips[clipIndex]);
+    }
+
     // Start Game - setting the level
     void Start () {
 
@@ -1062,6 +1100,10 @@ public class GameSystem : MonoBehaviour {
         canDoInput = true;
         playerHumanTurn = true;
         pcControl.EnableActiveBackground(true);
+        currentComboNum = 0;
+
+        //Play audio for current level
+        PlayCurrentLevelClip();
 
         //Set the elements for the player and the enemy
         int pcControlElement = GameState.control.baseElementIndex;

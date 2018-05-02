@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 [System.Serializable]
 public class LevelUI
@@ -19,20 +20,20 @@ public class LevelController : MonoBehaviour {
 
     public void StartLevel1()
     {
-        GameState.control.SetCurrentLevel(0);
-        SceneManager.LoadScene("BTGameplay");
+            GameState.control.SetCurrentLevel(0);
+            SceneManager.LoadScene("BTGameplay");
     }
 
     public void StartLevel2()
     {
-        GameState.control.SetCurrentLevel(1);
-        SceneManager.LoadScene("BTGameplay");
+            GameState.control.SetCurrentLevel(1);
+            SceneManager.LoadScene("BTGameplay");
     }
 
     public void StartLevel3()
     {
-        GameState.control.SetCurrentLevel(2);
-        SceneManager.LoadScene("BTGameplay");
+            GameState.control.SetCurrentLevel(2);
+            SceneManager.LoadScene("BTGameplay");
     }
 
     private void Start()

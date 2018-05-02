@@ -37,7 +37,7 @@ public class MapControl : MonoBehaviour
 
     }
 
-    void Update()
+    private void MouseInput()
     {
         //click and drag
         if (Input.GetMouseButton(0))
@@ -48,7 +48,7 @@ public class MapControl : MonoBehaviour
         }
 
         //zoom
-        if ((Input.GetAxis("Mouse ScrollWheel") > 0) && Camera.main.orthographicSize > minZoom ) // forward
+        if ((Input.GetAxis("Mouse ScrollWheel") > 0) && Camera.main.orthographicSize > minZoom) // forward
         {
             Camera.main.orthographicSize = Camera.main.orthographicSize - 0.05f;
         }
@@ -57,7 +57,55 @@ public class MapControl : MonoBehaviour
         {
             Camera.main.orthographicSize = Camera.main.orthographicSize + 0.05f;
         }
+    }
 
+    private void TouchInput()
+    {
+        //click and drag
+        if (Input.touchCount == 1)
+        {
+            float x = Input.GetTouch(0).position.x * panSpeed;
+            float y = Input.GetTouch(0).position.y * panSpeed;
+            transform.Translate(-x, -y, 0);
+        }
+
+        if (Input.touchCount == 2)
+        {
+            // Store both touches.
+            Touch touchZero = Input.GetTouch(0);
+            Touch touchOne = Input.GetTouch(1);
+
+            // Find the position in the previous frame of each touch.
+            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
+            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
+
+            // Find the magnitude of the vector (the distance) between the touches in each frame.
+            float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
+            float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
+
+            // Find the difference in the distances between each frame.
+            float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag;
+
+            //zoom
+            if (touchDeltaMag > prevTouchDeltaMag && Camera.main.orthographicSize > minZoom) // forward
+            {
+                Camera.main.orthographicSize = Camera.main.orthographicSize - 0.05f;
+            }
+
+            if (touchDeltaMag < prevTouchDeltaMag && Camera.main.orthographicSize < maxZoom) // back            
+            {
+                Camera.main.orthographicSize = Camera.main.orthographicSize + 0.05f;
+            }
+
+        }
+       
+    }
+
+    void Update()
+    {
+
+        MouseInput();
+        TouchInput();
 
         //check if camera is out-of-bounds, if so, move back in-bounds
         topRight = Camera.main.ScreenToWorldPoint(new Vector3(Camera.main.pixelWidth, Camera.main.pixelHeight, -transform.position.z));
